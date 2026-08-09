@@ -63,13 +63,7 @@ const EXPENSE_CATEGORIES = [
   "Shopping",
   "Other",
 ];
-const INCOME_CATEGORIES = [
-  "Salary",
-  "Freelance",
-  "Gift",
-  "Investment",
-  "Other",
-];
+const INCOME_CATEGORIES = ["Salary", "Freelance", "Gift", "Investment", "Other"];
 
 const CATEGORY_COLORS = {
   Groceries: "#3f6b64",
@@ -85,15 +79,10 @@ const CATEGORY_COLORS = {
 
 const money = (n) =>
   (n < 0 ? "-$" : "$") +
-  Math.abs(n).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const toDateStr = (d) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const todayStr = () => toDateStr(new Date());
 
@@ -112,33 +101,26 @@ const monthLabel = (ym) => {
 };
 
 // ---------------------------------------------------------------------------
-// storage helpers
+// storage helpers (browser localStorage, for a real deployed site)
 // ---------------------------------------------------------------------------
-function withTimeout(promise, ms = 2000) {
-  return Promise.race([
-    promise,
-    new Promise((resolve) => setTimeout(() => resolve(null), ms)),
-  ]);
-}
-
 async function storageGet(key) {
   try {
-    const res = await withTimeout(window.storage.get(key, false));
-    return res ? JSON.parse(res.value) : null;
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 async function storageSet(key, value) {
   try {
-    await window.storage.set(key, JSON.stringify(value), false);
+    window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // ignore, app still works in-memory for this session
   }
 }
 async function storageDelete(key) {
   try {
-    await window.storage.delete(key, false);
+    window.localStorage.removeItem(key);
   } catch {
     // ignore
   }
@@ -156,10 +138,7 @@ function Field({ label, children }) {
     <label className="block mb-4">
       <span
         className="block text-xs uppercase tracking-wide mb-1.5"
-        style={{
-          color: C.mutedLight,
-          fontFamily: "'IBM Plex Mono', monospace",
-        }}
+        style={{ color: C.mutedLight, fontFamily: "'IBM Plex Mono', monospace" }}
       >
         {label}
       </span>
@@ -183,9 +162,7 @@ function TextInput(props) {
   return <input {...props} style={{ ...inputStyle, ...(props.style || {}) }} />;
 }
 function SelectInput(props) {
-  return (
-    <select {...props} style={{ ...inputStyle, ...(props.style || {}) }} />
-  );
+  return <select {...props} style={{ ...inputStyle, ...(props.style || {}) }} />;
 }
 
 function Stamp({ text, color }) {
@@ -239,14 +216,7 @@ function SectionIntro({ title, text }) {
       >
         {title}
       </h1>
-      <p
-        style={{
-          color: C.muted,
-          fontSize: "14.5px",
-          maxWidth: "620px",
-          lineHeight: 1.5,
-        }}
-      >
+      <p style={{ color: C.muted, fontSize: "14.5px", maxWidth: "620px", lineHeight: 1.5 }}>
         {text}
       </p>
     </div>
@@ -268,19 +238,12 @@ function AuthScreen({ users, onSignup, onLogin }) {
     confirmPassword: "",
   });
 
-  const update = (key) => (e) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
+  const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const switchMode = (m) => {
     setMode(m);
     setError("");
-    setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+    setForm({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });
   };
 
   const submit = async () => {
@@ -288,12 +251,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
     const email = form.email.trim().toLowerCase();
 
     if (mode === "signup") {
-      if (
-        !form.firstName.trim() ||
-        !form.lastName.trim() ||
-        !email ||
-        !form.password
-      ) {
+      if (!form.firstName.trim() || !form.lastName.trim() || !email || !form.password) {
         setError("Fill in every field before you continue.");
         return;
       }
@@ -311,9 +269,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
       }
       const freshUsers = (await storageGet("users")) || users;
       if (freshUsers.some((u) => u.email === email)) {
-        setError(
-          "An account with that email already exists. Try logging in instead."
-        );
+        setError("An account with that email already exists. Try logging in instead.");
         return;
       }
       onSignup({
@@ -328,9 +284,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
         return;
       }
       const freshUsers = (await storageGet("users")) || users;
-      const match = freshUsers.find(
-        (u) => u.email === email && u.password === form.password
-      );
+      const match = freshUsers.find((u) => u.email === email && u.password === form.password);
       if (!match) {
         setError("We couldn't find an account with that email and password.");
         return;
@@ -357,13 +311,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
           >
             Fint<span style={{ color: C.gold }}>ent</span>
           </div>
-          <p
-            style={{
-              color: C.mutedLight,
-              fontSize: "13.5px",
-              marginTop: "6px",
-            }}
-          >
+          <p style={{ color: C.mutedLight, fontSize: "13.5px", marginTop: "6px" }}>
             Track your income and expenses, all in one place.
           </p>
         </div>
@@ -376,10 +324,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
             padding: "28px",
           }}
         >
-          <div
-            className="flex mb-6"
-            style={{ borderBottom: `1px solid ${C.inkLine}` }}
-          >
+          <div className="flex mb-6" style={{ borderBottom: `1px solid ${C.inkLine}` }}>
             {["login", "signup"].map((m) => (
               <button
                 key={m}
@@ -390,10 +335,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
                   fontSize: "14px",
                   fontWeight: 600,
                   color: mode === m ? C.gold : C.mutedLight,
-                  borderBottom:
-                    mode === m
-                      ? `2px solid ${C.gold}`
-                      : "2px solid transparent",
+                  borderBottom: mode === m ? `2px solid ${C.gold}` : "2px solid transparent",
                   marginBottom: "-1px",
                   background: "none",
                   cursor: "pointer",
@@ -408,26 +350,16 @@ function AuthScreen({ users, onSignup, onLogin }) {
             {mode === "signup" && (
               <div className="grid grid-cols-2 gap-3">
                 <Field label="First name">
-                  <TextInput
-                    value={form.firstName}
-                    onChange={update("firstName")}
-                  />
+                  <TextInput value={form.firstName} onChange={update("firstName")} />
                 </Field>
                 <Field label="Last name">
-                  <TextInput
-                    value={form.lastName}
-                    onChange={update("lastName")}
-                  />
+                  <TextInput value={form.lastName} onChange={update("lastName")} />
                 </Field>
               </div>
             )}
 
             <Field label="Email">
-              <TextInput
-                type="email"
-                value={form.email}
-                onChange={update("email")}
-              />
+              <TextInput type="email" value={form.email} onChange={update("email")} />
             </Field>
 
             <Field label="Password">
@@ -450,11 +382,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
 
             <label
               className="flex items-center gap-2 mb-4"
-              style={{
-                fontSize: "12.5px",
-                color: C.mutedLight,
-                cursor: "pointer",
-              }}
+              style={{ fontSize: "12.5px", color: C.mutedLight, cursor: "pointer" }}
             >
               <input
                 type="checkbox"
@@ -500,14 +428,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
           </div>
         </div>
 
-        <p
-          style={{
-            color: C.mutedLight,
-            fontSize: "12px",
-            textAlign: "center",
-            marginTop: "18px",
-          }}
-        >
+        <p style={{ color: C.mutedLight, fontSize: "12px", textAlign: "center", marginTop: "18px" }}>
           Built by Dhyan Subramani.
         </p>
       </div>
@@ -541,35 +462,20 @@ function Dashboard({ transactions }) {
   if (monthly.length === 1) {
     const [y, m] = monthly[0].ym.split("-").map(Number);
     const prev = new Date(y, m - 2, 1);
-    const prevYm = `${prev.getFullYear()}-${String(
-      prev.getMonth() + 1
-    ).padStart(2, "0")}`;
-    monthly = [
-      { ym: prevYm, income: 0, expense: 0, label: monthLabel(prevYm) },
-      ...monthly,
-    ];
+    const prevYm = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+    monthly = [{ ym: prevYm, income: 0, expense: 0, label: monthLabel(prevYm) }, ...monthly];
   }
 
   const byCategory = {};
   expenses.forEach((t) => {
     byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
   });
-  const pieData = Object.entries(byCategory).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const pieData = Object.entries(byCategory).map(([name, value]) => ({ name, value }));
 
   const stat = (label, value, icon, color, big) => (
     <Card style={{ flex: 1 }}>
       <div className="flex items-center justify-between mb-2">
-        <span
-          style={{
-            fontSize: "12.5px",
-            color: C.muted,
-            textTransform: "uppercase",
-            letterSpacing: "0.03em",
-          }}
-        >
+        <span style={{ fontSize: "12.5px", color: C.muted, textTransform: "uppercase", letterSpacing: "0.03em" }}>
           {label}
         </span>
         <span style={{ color }}>{icon}</span>
@@ -600,29 +506,15 @@ function Dashboard({ transactions }) {
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         {stat("Total income", totalIncome, <ArrowUpRight size={18} />, C.teal)}
-        {stat(
-          "Total expenses",
-          totalExpense,
-          <ArrowDownRight size={18} />,
-          C.brick
-        )}
+        {stat("Total expenses", totalExpense, <ArrowDownRight size={18} />, C.brick)}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
-          <h3
-            style={{
-              fontFamily: "'Zilla Slab', serif",
-              fontSize: "17px",
-              color: C.textDark,
-              marginBottom: "4px",
-            }}
-          >
+          <h3 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "17px", color: C.textDark, marginBottom: "4px" }}>
             Income and expenses over time
           </h3>
-          <p
-            style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}
-          >
+          <p style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}>
             Each point is a month you have entries for.
           </p>
           {monthly.length === 0 ? (
@@ -631,63 +523,21 @@ function Dashboard({ transactions }) {
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={monthly}>
                 <CartesianGrid stroke={C.parchmentLine} vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 12, fill: C.muted }}
-                  axisLine={{ stroke: C.parchmentLine }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 12, fill: C.muted }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={50}
-                />
-                <Tooltip
-                  formatter={(v) => money(v)}
-                  contentStyle={{
-                    fontSize: 13,
-                    borderRadius: 8,
-                    borderColor: C.parchmentLine,
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="income"
-                  stroke={C.teal}
-                  strokeWidth={2.5}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  name="Income"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="expense"
-                  stroke={C.brick}
-                  strokeWidth={2.5}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  name="Expenses"
-                />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: C.muted }} axisLine={{ stroke: C.parchmentLine }} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: C.muted }} axisLine={false} tickLine={false} width={50} />
+                <Tooltip formatter={(v) => money(v)} contentStyle={{ fontSize: 13, borderRadius: 8, borderColor: C.parchmentLine }} />
+                <Line type="monotone" dataKey="income" stroke={C.teal} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} name="Income" />
+                <Line type="monotone" dataKey="expense" stroke={C.brick} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} name="Expenses" />
               </LineChart>
             </ResponsiveContainer>
           )}
         </Card>
 
         <Card>
-          <h3
-            style={{
-              fontFamily: "'Zilla Slab', serif",
-              fontSize: "17px",
-              color: C.textDark,
-              marginBottom: "4px",
-            }}
-          >
+          <h3 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "17px", color: C.textDark, marginBottom: "4px" }}>
             Where expenses are going
           </h3>
-          <p
-            style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}
-          >
+          <p style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}>
             Every expense you've logged, grouped by category.
           </p>
           {pieData.length === 0 ? (
@@ -695,29 +545,12 @@ function Dashboard({ transactions }) {
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={2}
-                >
+                <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={2}>
                   {pieData.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={CATEGORY_COLORS[entry.name] || C.muted}
-                    />
+                    <Cell key={i} fill={CATEGORY_COLORS[entry.name] || C.muted} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(v) => money(v)}
-                  contentStyle={{
-                    fontSize: 13,
-                    borderRadius: 8,
-                    borderColor: C.parchmentLine,
-                  }}
-                />
+                <Tooltip formatter={(v) => money(v)} contentStyle={{ fontSize: 13, borderRadius: 8, borderColor: C.parchmentLine }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
@@ -761,8 +594,7 @@ function Tracker({ transactions, setTransactions }) {
   const [filter, setFilter] = useState("all");
   const [formError, setFormError] = useState("");
 
-  const categories =
-    type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const categories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   const changeType = (t) => {
     setType(t);
@@ -785,22 +617,14 @@ function Tracker({ transactions, setTransactions }) {
       return;
     }
     setTransactions((prev) => [
-      {
-        id: uid(),
-        type,
-        category,
-        amount: amt,
-        date,
-        description: description.trim(),
-      },
+      { id: uid(), type, category, amount: amt, date, description: description.trim() },
       ...prev,
     ]);
     setAmount("");
     setDescription("");
   };
 
-  const remove = (id) =>
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  const remove = (id) => setTransactions((prev) => prev.filter((t) => t.id !== id));
 
   const now = new Date();
   const thisMonth = toDateStr(now).slice(0, 7);
@@ -836,16 +660,9 @@ function Tracker({ transactions, setTransactions }) {
                   fontSize: "13.5px",
                   fontWeight: 600,
                   cursor: "pointer",
-                  background:
-                    type === t
-                      ? t === "expense"
-                        ? C.brick
-                        : C.teal
-                      : "transparent",
+                  background: type === t ? (t === "expense" ? C.brick : C.teal) : "transparent",
                   color: type === t ? "#fff" : C.textDark,
-                  border: `1px solid ${
-                    type === t ? "transparent" : C.parchmentLine
-                  }`,
+                  border: `1px solid ${type === t ? "transparent" : C.parchmentLine}`,
                 }}
               >
                 {t === "expense" ? "Expense" : "Income"}
@@ -855,39 +672,15 @@ function Tracker({ transactions, setTransactions }) {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
             <div>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: C.muted,
-                  display: "block",
-                  marginBottom: "5px",
-                }}
-              >
-                Category
-              </span>
-              <SelectInput
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                style={darkToLight()}
-              >
+              <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Category</span>
+              <SelectInput value={category} onChange={(e) => setCategory(e.target.value)} style={darkToLight()}>
                 {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </SelectInput>
             </div>
             <div>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: C.muted,
-                  display: "block",
-                  marginBottom: "5px",
-                }}
-              >
-                Amount
-              </span>
+              <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Amount</span>
               <TextInput
                 type="number"
                 step="0.01"
@@ -898,16 +691,7 @@ function Tracker({ transactions, setTransactions }) {
               />
             </div>
             <div>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: C.muted,
-                  display: "block",
-                  marginBottom: "5px",
-                }}
-              >
-                Date
-              </span>
+              <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Date</span>
               <TextInput
                 type="date"
                 value={date}
@@ -917,16 +701,7 @@ function Tracker({ transactions, setTransactions }) {
               />
             </div>
             <div>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: C.muted,
-                  display: "block",
-                  marginBottom: "5px",
-                }}
-              >
-                What was it
-              </span>
+              <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>What was it</span>
               <TextInput
                 type="text"
                 value={description}
@@ -937,11 +712,7 @@ function Tracker({ transactions, setTransactions }) {
           </div>
 
           {formError && (
-            <div
-              style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}
-            >
-              {formError}
-            </div>
+            <div style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}>{formError}</div>
           )}
 
           <button
@@ -965,20 +736,10 @@ function Tracker({ transactions, setTransactions }) {
       </Card>
 
       <div className="flex items-center justify-between mb-3">
-        <h3
-          style={{
-            fontFamily: "'Zilla Slab', serif",
-            fontSize: "17px",
-            color: C.textDark,
-          }}
-        >
+        <h3 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "17px", color: C.textDark }}>
           Everything you've logged
         </h3>
-        <SelectInput
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{ ...darkToLight(), width: "auto" }}
-        >
+        <SelectInput value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...darkToLight(), width: "auto" }}>
           <option value="all">All time</option>
           <option value="this">This month</option>
           <option value="last">Last month</option>
@@ -998,28 +759,16 @@ function Tracker({ transactions, setTransactions }) {
                 className="flex items-center justify-between"
                 style={{
                   padding: "14px 20px",
-                  borderBottom:
-                    i === filtered.length - 1
-                      ? "none"
-                      : `1px solid ${C.parchmentLine}`,
+                  borderBottom: i === filtered.length - 1 ? "none" : `1px solid ${C.parchmentLine}`,
                 }}
               >
                 <div className="flex items-center gap-3">
-                  <Stamp
-                    text={t.category}
-                    color={CATEGORY_COLORS[t.category] || C.muted}
-                  />
+                  <Stamp text={t.category} color={CATEGORY_COLORS[t.category] || C.muted} />
                   <div>
                     <div style={{ fontSize: "14px", color: C.textDark }}>
                       {t.description || t.category}
                     </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: C.muted,
-                        fontFamily: "'IBM Plex Mono', monospace",
-                      }}
-                    >
+                    <div style={{ fontSize: "12px", color: C.muted, fontFamily: "'IBM Plex Mono', monospace" }}>
                       {t.date}
                     </div>
                   </div>
@@ -1032,13 +781,9 @@ function Tracker({ transactions, setTransactions }) {
                       color: t.type === "income" ? C.teal : C.brick,
                     }}
                   >
-                    {t.type === "income" ? "+" : "-"}
-                    {money(t.amount)}
+                    {t.type === "income" ? "+" : "-"}{money(t.amount)}
                   </span>
-                  <button
-                    onClick={() => remove(t.id)}
-                    style={{ color: C.muted, background: "none" }}
-                  >
+                  <button onClick={() => remove(t.id)} style={{ color: C.muted, background: "none" }}>
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -1078,9 +823,7 @@ function Savings({ goals, setGoals }) {
       return;
     }
     if (deadline && deadline < todayStr()) {
-      setError(
-        "That date is in the past. Pick one that's still ahead of you, or leave it blank."
-      );
+      setError("That date is in the past. Pick one that's still ahead of you, or leave it blank.");
       return;
     }
     setGoals((prev) => [
@@ -1102,9 +845,7 @@ function Savings({ goals, setGoals }) {
   const contribute = (id) => {
     const amt = parseFloat(contribInputs[id]);
     if (!amt || amt <= 0) return;
-    setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, current: g.current + amt } : g))
-    );
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, current: g.current + amt } : g)));
     setContribInputs((c) => ({ ...c, [id]: "" }));
   };
 
@@ -1118,65 +859,18 @@ function Savings({ goals, setGoals }) {
       />
 
       <Card style={{ marginBottom: "20px" }}>
-        <div
-          onKeyDown={(e) => e.key === "Enter" && addGoal()}
-          className="flex flex-wrap gap-3 items-end"
-        >
+        <div onKeyDown={(e) => e.key === "Enter" && addGoal()} className="flex flex-wrap gap-3 items-end">
           <div style={{ flex: "2 1 200px" }}>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Goal name
-            </span>
-            <TextInput
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Goal name</span>
+            <TextInput value={name} onChange={(e) => setName(e.target.value)} style={darkToLight()} />
           </div>
           <div style={{ flex: "1 1 140px" }}>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Target amount
-            </span>
-            <TextInput
-              type="number"
-              min="0"
-              step="0.01"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Target amount</span>
+            <TextInput type="number" min="0" step="0.01" value={target} onChange={(e) => setTarget(e.target.value)} style={darkToLight()} />
           </div>
           <div style={{ flex: "1 1 160px" }}>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Have it by (optional)
-            </span>
-            <TextInput
-              type="date"
-              min={todayStr()}
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Have it by (optional)</span>
+            <TextInput type="date" min={todayStr()} value={deadline} onChange={(e) => setDeadline(e.target.value)} style={darkToLight()} />
           </div>
           <button
             type="button"
@@ -1196,42 +890,26 @@ function Savings({ goals, setGoals }) {
             <Plus size={15} /> Add goal
           </button>
         </div>
-        {error && (
-          <div style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}>
-            {error}
-          </div>
-        )}
+        {error && <div style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}>{error}</div>}
       </Card>
 
       {goals.length === 0 ? (
-        <Card>
-          <EmptyNote text="You haven't set up a savings goal yet. Add one above to start." />
-        </Card>
+        <Card><EmptyNote text="You haven't set up a savings goal yet. Add one above to start." /></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {goals.map((g) => {
             const pct = Math.min(100, (g.current / g.target) * 100);
             const reached = g.current >= g.target;
 
-            let daysLeft = null,
-              behind = false,
-              overdue = false,
-              perMonth = 0,
-              remaining = 0;
+            let daysLeft = null, behind = false, overdue = false, perMonth = 0, remaining = 0;
             if (g.deadline) {
               const targetDate = new Date(g.deadline + "T00:00:00");
               const start = new Date((g.startDate || todayStr()) + "T00:00:00");
               const now = new Date(todayStr() + "T00:00:00");
               const totalDays = Math.max(1, (targetDate - start) / 86400000);
               daysLeft = Math.ceil((targetDate - now) / 86400000);
-              const elapsedDays = Math.min(
-                totalDays,
-                Math.max(0, (now - start) / 86400000)
-              );
-              const expectedPct = Math.min(
-                100,
-                (elapsedDays / totalDays) * 100
-              );
+              const elapsedDays = Math.min(totalDays, Math.max(0, (now - start) / 86400000));
+              const expectedPct = Math.min(100, (elapsedDays / totalDays) * 100);
               overdue = !reached && daysLeft < 0;
               behind = !reached && daysLeft >= 0 && pct + 5 < expectedPct;
               remaining = Math.max(0, g.target - g.current);
@@ -1242,67 +920,25 @@ function Savings({ goals, setGoals }) {
             return (
               <Card key={g.id}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3
-                    style={{
-                      fontFamily: "'Zilla Slab', serif",
-                      fontSize: "16.5px",
-                      color: C.textDark,
-                    }}
-                  >
-                    {g.name}
-                  </h3>
-                  <button
-                    onClick={() => remove(g.id)}
-                    style={{ color: C.muted, background: "none" }}
-                  >
+                  <h3 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "16.5px", color: C.textDark }}>{g.name}</h3>
+                  <button onClick={() => remove(g.id)} style={{ color: C.muted, background: "none" }}>
                     <Trash2 size={15} />
                   </button>
                 </div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color: C.muted,
-                    marginBottom: "8px",
-                  }}
-                >
+                <div style={{ fontSize: "13px", color: C.muted, marginBottom: "8px" }}>
                   {money(g.current)} saved toward {money(g.target)}
                   {reached && (
                     <span style={{ color: C.teal, marginLeft: "8px" }}>
-                      <CheckCircle2
-                        size={13}
-                        style={{ display: "inline", marginBottom: "2px" }}
-                      />{" "}
-                      reached
+                      <CheckCircle2 size={13} style={{ display: "inline", marginBottom: "2px" }} /> reached
                     </span>
                   )}
                 </div>
-                <div
-                  style={{
-                    background: "#e5ddc8",
-                    borderRadius: "999px",
-                    height: "10px",
-                    overflow: "hidden",
-                    marginBottom: g.deadline ? "10px" : "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${pct}%`,
-                      background: reached
-                        ? C.teal
-                        : behind || overdue
-                        ? C.brick
-                        : C.gold,
-                      height: "100%",
-                    }}
-                  />
+                <div style={{ background: "#e5ddc8", borderRadius: "999px", height: "10px", overflow: "hidden", marginBottom: g.deadline ? "10px" : "12px" }}>
+                  <div style={{ width: `${pct}%`, background: reached ? C.teal : behind || overdue ? C.brick : C.gold, height: "100%" }} />
                 </div>
 
                 {g.deadline && (
-                  <div
-                    className="flex items-center gap-2 mb-2"
-                    style={{ fontSize: "12.5px" }}
-                  >
+                  <div className="flex items-center gap-2 mb-2" style={{ fontSize: "12.5px" }}>
                     <CalendarClock size={14} color={C.muted} />
                     <span style={{ color: C.muted }}>
                       {reached
@@ -1311,9 +947,7 @@ function Savings({ goals, setGoals }) {
                         ? `Was due ${g.deadline}`
                         : daysLeft === 0
                         ? "Due today"
-                        : `${daysLeft} day${
-                            daysLeft === 1 ? "" : "s"
-                          } left, due ${g.deadline}`}
+                        : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left, due ${g.deadline}`}
                     </span>
                   </div>
                 )}
@@ -1323,37 +957,21 @@ function Savings({ goals, setGoals }) {
                     style={{
                       fontSize: "12.5px",
                       color: overdue || behind ? C.brick : C.teal,
-                      background:
-                        overdue || behind
-                          ? "rgba(224,84,58,0.1)"
-                          : "rgba(18,150,122,0.1)",
+                      background: overdue || behind ? "rgba(224,84,58,0.1)" : "rgba(18,150,122,0.1)",
                       borderRadius: "6px",
                       padding: "7px 10px",
                       marginBottom: "12px",
                     }}
                   >
                     {overdue
-                      ? `This one's past its date and still short by ${money(
-                          remaining
-                        )}.`
+                      ? `This one's past its date and still short by ${money(remaining)}.`
                       : behind
-                      ? `You're behind pace. Save about ${money(
-                          perMonth
-                        )} a month to catch up by the date.`
-                      : `On pace. About ${money(
-                          perMonth
-                        )} a month keeps you on track.`}
+                      ? `You're behind pace. Save about ${money(perMonth)} a month to catch up by the date.`
+                      : `On pace. About ${money(perMonth)} a month keeps you on track.`}
                   </div>
                 )}
 
-                <span
-                  style={{
-                    fontSize: "12px",
-                    color: C.muted,
-                    display: "block",
-                    marginBottom: "5px",
-                  }}
-                >
+                <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>
                   Put money toward this goal
                 </span>
                 <div className="flex gap-2">
@@ -1362,12 +980,7 @@ function Savings({ goals, setGoals }) {
                     min="0"
                     step="0.01"
                     value={contribInputs[g.id] || ""}
-                    onChange={(e) =>
-                      setContribInputs((c) => ({
-                        ...c,
-                        [g.id]: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setContribInputs((c) => ({ ...c, [g.id]: e.target.value }))}
                     style={{ ...darkToLight(), flex: 1 }}
                   />
                   <button
@@ -1412,17 +1025,7 @@ function Bills({ bills, setBills }) {
       setError("Fill in a name, an amount, and a due date.");
       return;
     }
-    setBills((prev) => [
-      ...prev,
-      {
-        id: uid(),
-        name: name.trim(),
-        amount: amt,
-        dueDate,
-        frequency,
-        paid: false,
-      },
-    ]);
+    setBills((prev) => [...prev, { id: uid(), name: name.trim(), amount: amt, dueDate, frequency, paid: false }]);
     setName("");
     setAmount("");
   };
@@ -1441,11 +1044,7 @@ function Bills({ bills, setBills }) {
         } else if (b.frequency === "monthly") {
           d.setDate(1);
           d.setMonth(d.getMonth() + 1);
-          const lastDay = new Date(
-            d.getFullYear(),
-            d.getMonth() + 1,
-            0
-          ).getDate();
+          const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
           d.setDate(Math.min(day, lastDay));
         } else if (b.frequency === "yearly") {
           const targetYear = d.getFullYear() + 1;
@@ -1468,81 +1067,22 @@ function Bills({ bills, setBills }) {
       />
 
       <Card style={{ marginBottom: "20px" }}>
-        <div
-          onKeyDown={(e) => e.key === "Enter" && addBill()}
-          className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end"
-        >
+        <div onKeyDown={(e) => e.key === "Enter" && addBill()} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
           <div style={{ gridColumn: "span 2" }}>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Bill name
-            </span>
-            <TextInput
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Bill name</span>
+            <TextInput value={name} onChange={(e) => setName(e.target.value)} style={darkToLight()} />
           </div>
           <div>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Amount
-            </span>
-            <TextInput
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Amount</span>
+            <TextInput type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} style={darkToLight()} />
           </div>
           <div>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Due date
-            </span>
-            <TextInput
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={darkToLight()}
-            />
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Due date</span>
+            <TextInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={darkToLight()} />
           </div>
           <div>
-            <span
-              style={{
-                fontSize: "12px",
-                color: C.muted,
-                display: "block",
-                marginBottom: "5px",
-              }}
-            >
-              Repeats
-            </span>
-            <SelectInput
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-              style={darkToLight()}
-            >
+            <span style={{ fontSize: "12px", color: C.muted, display: "block", marginBottom: "5px" }}>Repeats</span>
+            <SelectInput value={frequency} onChange={(e) => setFrequency(e.target.value)} style={darkToLight()}>
               <option value="one-time">One time</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -1568,25 +1108,15 @@ function Bills({ bills, setBills }) {
             <Plus size={15} /> Add
           </button>
         </div>
-        {error && (
-          <div style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}>
-            {error}
-          </div>
-        )}
+        {error && <div style={{ color: C.brick, fontSize: "13px", marginTop: "10px" }}>{error}</div>}
       </Card>
 
       {sorted.length === 0 ? (
-        <Card>
-          <EmptyNote text="No bills on the books yet. Add one above to keep track of it." />
-        </Card>
+        <Card><EmptyNote text="No bills on the books yet. Add one above to keep track of it." /></Card>
       ) : (
         <Card style={{ padding: 0 }}>
           {sorted.map((b, i) => {
-            const days = Math.ceil(
-              (new Date(b.dueDate + "T00:00:00") -
-                new Date(todayStr() + "T00:00:00")) /
-                86400000
-            );
+            const days = Math.ceil((new Date(b.dueDate + "T00:00:00") - new Date(todayStr() + "T00:00:00")) / 86400000);
             const overdue = days < 0 && !b.paid;
             const dueSoon = days >= 0 && days <= 7 && !b.paid;
             return (
@@ -1595,98 +1125,35 @@ function Bills({ bills, setBills }) {
                 className="flex items-center justify-between"
                 style={{
                   padding: "14px 20px",
-                  borderBottom:
-                    i === sorted.length - 1
-                      ? "none"
-                      : `1px solid ${C.parchmentLine}`,
-                  borderLeft: overdue
-                    ? `3px solid ${C.brick}`
-                    : dueSoon
-                    ? `3px solid ${C.gold}`
-                    : "3px solid transparent",
+                  borderBottom: i === sorted.length - 1 ? "none" : `1px solid ${C.parchmentLine}`,
+                  borderLeft: overdue ? `3px solid ${C.brick}` : dueSoon ? `3px solid ${C.gold}` : "3px solid transparent",
                   opacity: b.paid ? 0.55 : 1,
                 }}
               >
                 <div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: C.textDark,
-                      fontWeight: 500,
-                    }}
-                  >
+                  <div style={{ fontSize: "14px", color: C.textDark, fontWeight: 500 }}>
                     {b.name}{" "}
-                    {overdue && (
-                      <span
-                        style={{
-                          color: C.brick,
-                          fontSize: "12px",
-                          marginLeft: "6px",
-                        }}
-                      >
-                        overdue
-                      </span>
-                    )}
-                    {dueSoon && (
-                      <span
-                        style={{
-                          color: "#8a6a1e",
-                          fontSize: "12px",
-                          marginLeft: "6px",
-                        }}
-                      >
-                        due soon
-                      </span>
-                    )}
-                    {b.paid && (
-                      <span
-                        style={{
-                          color: C.teal,
-                          fontSize: "12px",
-                          marginLeft: "6px",
-                        }}
-                      >
-                        paid
-                      </span>
-                    )}
+                    {overdue && <span style={{ color: C.brick, fontSize: "12px", marginLeft: "6px" }}>overdue</span>}
+                    {dueSoon && <span style={{ color: "#8a6a1e", fontSize: "12px", marginLeft: "6px" }}>due soon</span>}
+                    {b.paid && <span style={{ color: C.teal, fontSize: "12px", marginLeft: "6px" }}>paid</span>}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: C.muted,
-                      fontFamily: "'IBM Plex Mono', monospace",
-                    }}
-                  >
+                  <div style={{ fontSize: "12px", color: C.muted, fontFamily: "'IBM Plex Mono', monospace" }}>
                     due {b.dueDate} · {b.frequency}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontWeight: 600,
-                      color: C.textDark,
-                    }}
-                  >
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, color: C.textDark }}>
                     {money(b.amount)}
                   </span>
                   {!b.paid && (
                     <button
                       onClick={() => advance(b.id)}
-                      style={{
-                        fontSize: "12.5px",
-                        color: C.teal,
-                        background: "none",
-                        fontWeight: 600,
-                      }}
+                      style={{ fontSize: "12.5px", color: C.teal, background: "none", fontWeight: 600 }}
                     >
                       Mark paid
                     </button>
                   )}
-                  <button
-                    onClick={() => remove(b.id)}
-                    style={{ color: C.muted, background: "none" }}
-                  >
+                  <button onClick={() => remove(b.id)} style={{ color: C.muted, background: "none" }}>
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -1716,23 +1183,15 @@ function Insights({ transactions }) {
 
   const now = new Date();
   const thisYm = toDateStr(now).slice(0, 7);
-  const lastYm = toDateStr(
-    new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  ).slice(0, 7);
+  const lastYm = toDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1)).slice(0, 7);
 
-  const thisMonthExpenses = transactions.filter(
-    (t) => t.type === "expense" && t.date.slice(0, 7) === thisYm
-  );
-  const lastMonthExpenses = transactions.filter(
-    (t) => t.type === "expense" && t.date.slice(0, 7) === lastYm
-  );
+  const thisMonthExpenses = transactions.filter((t) => t.type === "expense" && t.date.slice(0, 7) === thisYm);
+  const lastMonthExpenses = transactions.filter((t) => t.type === "expense" && t.date.slice(0, 7) === lastYm);
   const thisTotal = thisMonthExpenses.reduce((s, t) => s + t.amount, 0);
   const lastTotal = lastMonthExpenses.reduce((s, t) => s + t.amount, 0);
 
   const catTotals = {};
-  thisMonthExpenses.forEach(
-    (t) => (catTotals[t.category] = (catTotals[t.category] || 0) + t.amount)
-  );
+  thisMonthExpenses.forEach((t) => (catTotals[t.category] = (catTotals[t.category] || 0) + t.amount));
   const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
 
   const daysElapsed = now.getDate();
@@ -1748,58 +1207,22 @@ function Insights({ transactions }) {
       />
 
       <Card style={{ marginBottom: "20px" }}>
-        <h3
-          style={{
-            fontFamily: "'Zilla Slab', serif",
-            fontSize: "17px",
-            color: C.textDark,
-            marginBottom: "4px",
-          }}
-        >
+        <h3 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "17px", color: C.textDark, marginBottom: "4px" }}>
           Income against expenses, month by month
         </h3>
-        <p style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}>
-          Last six months with any activity.
-        </p>
+        <p style={{ fontSize: "12.5px", color: C.muted, marginBottom: "10px" }}>Last six months with any activity.</p>
         {monthly.length === 0 ? (
           <EmptyNote text="Log a few months of entries and the comparison will show up here." />
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={monthly}>
               <CartesianGrid stroke={C.parchmentLine} vertical={false} />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 12, fill: C.muted }}
-                axisLine={{ stroke: C.parchmentLine }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: C.muted }}
-                axisLine={false}
-                tickLine={false}
-                width={50}
-              />
-              <Tooltip
-                formatter={(v) => money(v)}
-                contentStyle={{
-                  fontSize: 13,
-                  borderRadius: 8,
-                  borderColor: C.parchmentLine,
-                }}
-              />
+              <XAxis dataKey="label" tick={{ fontSize: 12, fill: C.muted }} axisLine={{ stroke: C.parchmentLine }} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: C.muted }} axisLine={false} tickLine={false} width={50} />
+              <Tooltip formatter={(v) => money(v)} contentStyle={{ fontSize: 13, borderRadius: 8, borderColor: C.parchmentLine }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar
-                dataKey="income"
-                fill={C.teal}
-                name="Income"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="expense"
-                fill={C.brick}
-                name="Expenses"
-                radius={[4, 4, 0, 0]}
-              />
+              <Bar dataKey="income" fill={C.teal} name="Income" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expense" fill={C.brick} name="Expenses" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -1807,64 +1230,25 @@ function Insights({ transactions }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <div
-            style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}
-          >
-            Biggest category this month
-          </div>
-          <div
-            style={{
-              fontFamily: "'Zilla Slab', serif",
-              fontSize: "20px",
-              color: C.textDark,
-            }}
-          >
+          <div style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}>Biggest category this month</div>
+          <div style={{ fontFamily: "'Zilla Slab', serif", fontSize: "20px", color: C.textDark }}>
             {topCat ? topCat[0] : "None yet"}
           </div>
           {topCat && (
-            <div
-              style={{
-                fontSize: "13px",
-                color: C.muted,
-                marginTop: "2px",
-                fontFamily: "'IBM Plex Mono', monospace",
-              }}
-            >
+            <div style={{ fontSize: "13px", color: C.muted, marginTop: "2px", fontFamily: "'IBM Plex Mono', monospace" }}>
               {money(topCat[1])} so far
             </div>
           )}
         </Card>
         <Card>
-          <div
-            style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}
-          >
-            Average spent per day this month
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "22px",
-              color: C.textDark,
-              fontWeight: 600,
-            }}
-          >
+          <div style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}>Average spent per day this month</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "22px", color: C.textDark, fontWeight: 600 }}>
             {money(avgDaily)}
           </div>
         </Card>
         <Card>
-          <div
-            style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}
-          >
-            Compared to last month
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "20px",
-              color: diff > 0 ? C.brick : C.teal,
-              fontWeight: 600,
-            }}
-          >
+          <div style={{ fontSize: "12.5px", color: C.muted, marginBottom: "6px" }}>Compared to last month</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "20px", color: diff > 0 ? C.brick : C.teal, fontWeight: 600 }}>
             {diff === 0 ? "About even" : `${diff > 0 ? "+" : ""}${money(diff)}`}
           </div>
           <div style={{ fontSize: "12px", color: C.muted, marginTop: "2px" }}>
@@ -1903,22 +1287,13 @@ function Profile({ user, onLogout }) {
               fontWeight: 700,
             }}
           >
-            {user.firstName[0]}
-            {user.lastName[0]}
+            {user.firstName[0]}{user.lastName[0]}
           </div>
           <div>
-            <div
-              style={{
-                fontFamily: "'Zilla Slab', serif",
-                fontSize: "19px",
-                color: C.textDark,
-              }}
-            >
+            <div style={{ fontFamily: "'Zilla Slab', serif", fontSize: "19px", color: C.textDark }}>
               {user.firstName} {user.lastName}
             </div>
-            <div style={{ fontSize: "13.5px", color: C.muted }}>
-              {user.email}
-            </div>
+            <div style={{ fontSize: "13.5px", color: C.muted }}>{user.email}</div>
           </div>
         </div>
 
@@ -1987,8 +1362,7 @@ export default function Fintent() {
     if (!currentUser) return;
     dataLoaded.current = false;
     (async () => {
-      const data =
-        (await storageGet(`data:${currentUser.email}`)) || emptyUserData();
+      const data = (await storageGet(`data:${currentUser.email}`)) || emptyUserData();
       // older saves kept deadline goals in a separate list, fold them back in
       setTransactions(data.transactions || []);
       setGoals([...(data.goals || []), ...(data.timelineGoals || [])]);
@@ -2046,11 +1420,7 @@ export default function Fintent() {
       `}</style>
 
       {!currentUser ? (
-        <AuthScreen
-          users={users}
-          onSignup={handleSignup}
-          onLogin={handleLogin}
-        />
+        <AuthScreen users={users} onSignup={handleSignup} onLogin={handleLogin} />
       ) : (
         <div className="flex" style={{ minHeight: "100vh" }}>
           <aside
@@ -2096,42 +1466,18 @@ export default function Fintent() {
                 </button>
               ))}
             </nav>
-            <div
-              style={{
-                padding: "0 10px",
-                fontSize: "11.5px",
-                color: "#5c6472",
-              }}
-            >
+            <div style={{ padding: "0 10px", fontSize: "11.5px", color: "#5c6472" }}>
               Signed in as {currentUser.firstName}
             </div>
           </aside>
 
-          <main
-            style={{
-              flex: 1,
-              background: C.parchment,
-              padding: "32px 40px",
-              overflowY: "auto",
-            }}
-          >
-            {section === "dashboard" && (
-              <Dashboard transactions={transactions} />
-            )}
-            {section === "tracker" && (
-              <Tracker
-                transactions={transactions}
-                setTransactions={setTransactions}
-              />
-            )}
-            {section === "savings" && (
-              <Savings goals={goals} setGoals={setGoals} />
-            )}
+          <main style={{ flex: 1, background: C.parchment, padding: "32px 40px", overflowY: "auto" }}>
+            {section === "dashboard" && <Dashboard transactions={transactions} />}
+            {section === "tracker" && <Tracker transactions={transactions} setTransactions={setTransactions} />}
+            {section === "savings" && <Savings goals={goals} setGoals={setGoals} />}
             {section === "bills" && <Bills bills={bills} setBills={setBills} />}
             {section === "insights" && <Insights transactions={transactions} />}
-            {section === "profile" && (
-              <Profile user={currentUser} onLogout={handleLogout} />
-            )}
+            {section === "profile" && <Profile user={currentUser} onLogout={handleLogout} />}
           </main>
         </div>
       )}
