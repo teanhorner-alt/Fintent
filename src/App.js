@@ -101,33 +101,27 @@ const monthLabel = (ym) => {
 };
 
 // ---------------------------------------------------------------------------
-// storage helpers (browser localStorage, for a real deployed site)
+// API client (real backend — accounts and data live in Postgres, not the browser)
 // ---------------------------------------------------------------------------
-async function storageGet(key) {
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    credentials: "include",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let payload = null;
   try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
+    payload = await res.json();
   } catch {
-    return null;
+    // no JSON body (e.g. 204)
   }
-}
-async function storageSet(key, value) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // ignore, app still works in-memory for this session
+  if (!res.ok) {
+    const err = new Error((payload && payload.error) || `Request failed (${res.status})`);
+    err.status = res.status;
+    throw err;
   }
-}
-async function storageDelete(key) {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // ignore
-  }
-}
-
-function emptyUserData() {
-  return { transactions: [], goals: [], bills: [], timelineGoals: [] };
+  return payload;
 }
 
 // ---------------------------------------------------------------------------
@@ -226,10 +220,11 @@ function SectionIntro({ title, text }) {
 // ---------------------------------------------------------------------------
 // auth screen
 // ---------------------------------------------------------------------------
-function AuthScreen({ users, onSignup, onLogin }) {
+function AuthScreen({ onSignup, onLogin }) {
   const [mode, setMode] = useState("login");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -267,29 +262,34 @@ function AuthScreen({ users, onSignup, onLogin }) {
         setError("Those two passwords don't match.");
         return;
       }
-      const freshUsers = (await storageGet("users")) || users;
-      if (freshUsers.some((u) => u.email === email)) {
-        setError("An account with that email already exists. Try logging in instead.");
-        return;
+      setBusy(true);
+      try {
+        const { user } = await api("POST", "/api/signup", {
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email,
+          password: form.password,
+        });
+        onSignup(user);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setBusy(false);
       }
-      onSignup({
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email,
-        password: form.password,
-      });
     } else {
       if (!email || !form.password) {
         setError("Enter your email and password to log in.");
         return;
       }
-      const freshUsers = (await storageGet("users")) || users;
-      const match = freshUsers.find((u) => u.email === email && u.password === form.password);
-      if (!match) {
-        setError("We couldn't find an account with that email and password.");
-        return;
+      setBusy(true);
+      try {
+        const { user } = await api("POST", "/api/login", { email, password: form.password });
+        onLogin(user);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setBusy(false);
       }
-      onLogin(match);
     }
   };
 
@@ -412,6 +412,7 @@ function AuthScreen({ users, onSignup, onLogin }) {
             <button
               type="button"
               onClick={submit}
+              disabled={busy}
               style={{
                 width: "100%",
                 background: C.gold,
@@ -420,10 +421,11 @@ function AuthScreen({ users, onSignup, onLogin }) {
                 padding: "11px 0",
                 borderRadius: "6px",
                 fontSize: "14.5px",
-                cursor: "pointer",
+                cursor: busy ? "default" : "pointer",
+                opacity: busy ? 0.7 : 1,
               }}
             >
-              {mode === "login" ? "Log in" : "Create account"}
+              {busy ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
             </button>
           </div>
         </div>
@@ -1335,8 +1337,8 @@ const NAV = [
 ];
 
 export default function Fintent() {
-  const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [section, setSection] = useState("dashboard");
 
   const [transactions, setTransactions] = useState([]);
@@ -1344,67 +1346,65 @@ export default function Fintent() {
   const [bills, setBills] = useState([]);
   const dataLoaded = useRef(false);
 
-  // load users and any existing session in the background, never blocking the UI
+  // check for an existing session cookie in the background, never blocking the UI
   useEffect(() => {
     (async () => {
-      const storedUsers = (await storageGet("users")) || [];
-      setUsers(storedUsers);
-      const session = await storageGet("session");
-      if (session && session.email) {
-        const match = storedUsers.find((u) => u.email === session.email);
-        if (match) setCurrentUser(match);
+      try {
+        const { user } = await api("GET", "/api/me");
+        setCurrentUser(user);
+      } catch {
+        // not signed in — that's fine, AuthScreen will show
+      } finally {
+        setCheckingSession(false);
       }
     })();
   }, []);
 
-  // load that user's data whenever currentUser changes
+  // load that user's data from the server whenever currentUser changes
   useEffect(() => {
     if (!currentUser) return;
     dataLoaded.current = false;
     (async () => {
-      const data = (await storageGet(`data:${currentUser.email}`)) || emptyUserData();
-      // older saves kept deadline goals in a separate list, fold them back in
-      setTransactions(data.transactions || []);
-      setGoals([...(data.goals || []), ...(data.timelineGoals || [])]);
-      setBills(data.bills || []);
-      dataLoaded.current = true;
+      try {
+        const { data } = await api("GET", "/api/data");
+        setTransactions(data.transactions || []);
+        setGoals(data.goals || []);
+        setBills(data.bills || []);
+      } catch {
+        setTransactions([]);
+        setGoals([]);
+        setBills([]);
+      } finally {
+        dataLoaded.current = true;
+      }
     })();
   }, [currentUser]);
 
-  // persist that user's data whenever it changes
+  // persist that user's data to the server whenever it changes
   useEffect(() => {
     if (!currentUser || !dataLoaded.current) return;
-    storageSet(`data:${currentUser.email}`, { transactions, goals, bills });
+    api("PATCH", "/api/data", { transactions, goals, bills }).catch(() => {
+      // a save failing silently here is preferable to crashing the UI;
+      // the next successful save will still carry the latest state
+    });
   }, [transactions, goals, bills, currentUser]);
 
-  const handleSignup = async (newUser) => {
-    // read the freshest copy from storage right before writing, so a stale
-    // in-memory list can never blow away accounts that already exist there
-    const latestUsers = (await storageGet("users")) || users;
-    if (latestUsers.some((u) => u.email === newUser.email)) {
-      setUsers(latestUsers);
-      return;
-    }
-    const nextUsers = [...latestUsers, newUser];
-    setUsers(nextUsers);
-    setCurrentUser(newUser);
+  const handleSignup = (user) => {
+    setCurrentUser(user);
     setSection("dashboard");
-    storageSet("users", nextUsers);
-    storageSet("session", { email: newUser.email });
   };
 
   const handleLogin = (user) => {
     setCurrentUser(user);
     setSection("dashboard");
-    storageSet("session", { email: user.email });
   };
 
   const handleLogout = () => {
+    api("POST", "/api/logout").catch(() => {});
     setCurrentUser(null);
     setTransactions([]);
     setGoals([]);
     setBills([]);
-    storageDelete("session");
   };
 
   return (
@@ -1419,8 +1419,15 @@ export default function Fintent() {
         button { cursor: pointer; }
       `}</style>
 
-      {!currentUser ? (
-        <AuthScreen users={users} onSignup={handleSignup} onLogin={handleLogin} />
+      {checkingSession ? (
+        <div
+          className="min-h-screen w-full flex items-center justify-center"
+          style={{ background: C.ink, color: C.mutedLight, fontSize: "14px" }}
+        >
+          Loading...
+        </div>
+      ) : !currentUser ? (
+        <AuthScreen onSignup={handleSignup} onLogin={handleLogin} />
       ) : (
         <div className="flex" style={{ minHeight: "100vh" }}>
           <aside
